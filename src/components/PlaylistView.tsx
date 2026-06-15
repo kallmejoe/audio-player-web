@@ -27,7 +27,7 @@ export default function PlaylistView({
   onToggleSidebar,
 }: PlaylistViewProps) {
   const isAllTracks = playlist === null;
-  const title = isAllTracks ? 'All Songs' : playlist.name;
+  const title = isAllTracks ? 'All' : playlist.name;
   const subtitle = isAllTracks ? '' : (playlist.folderPath !== playlist.name ? playlist.folderPath : '');
 
   return (

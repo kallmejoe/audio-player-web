@@ -231,7 +231,7 @@ export default function DirectoryImporter({ onClose, onImportTracks, onClearLibr
           </div>
           <button
             onClick={onClose}
-            className="text-zinc-400 hover:text-white p-1 rounded-md transition-colors cursor-pointer"
+            className="text-zinc-400 hover:text-white p-1 rounded-md transition-colors"
           >
             <X size={14} />
           </button>
@@ -258,7 +258,7 @@ export default function DirectoryImporter({ onClose, onImportTracks, onClearLibr
             ) : (
               <button
                 onClick={triggerFolderSelect}
-                className="w-full py-2 bg-[#fa243c] hover:bg-[#e02035] text-white font-medium text-[13px] rounded-md transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-2 bg-[#fa243c] hover:bg-[#e02035] text-white font-medium text-[13px] rounded-md transition-colors flex items-center justify-center gap-2"
               >
                 {electronMode ? <FolderOpen size={16} /> : <FolderPlus size={16} />}
                 <span>{electronMode ? 'Choose Library...' : 'Choose Folder...'}</span>

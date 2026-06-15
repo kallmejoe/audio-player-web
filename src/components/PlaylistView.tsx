@@ -121,7 +121,7 @@ export default function PlaylistView({
             return (
               <div
                 key={track.id}
-                className="group flex items-center px-6 py-[5px] cursor-pointer transition-colors select-none"
+                className="group flex items-center px-6 py-[5px] transition-colors select-none"
                 style={{ backgroundColor: baseBg }}
                 onMouseEnter={(e) => {
                   (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.04)';

@@ -51,14 +51,14 @@ export default function Sidebar({
         <div className="flex items-center gap-3">
           <button
             onClick={() => onSelectPlaylist(null)}
-            className="text-[12px] font-medium text-zinc-400 hover:text-white transition-colors cursor-pointer mr-1"
+            className="text-[12px] font-medium text-zinc-500 mr-1"
             style={{ WebkitAppRegion: 'no-drag' } as any}
           >
             All
           </button>
           <button
             onClick={onOpenSettings}
-            className="text-zinc-500 hover:text-zinc-200 transition-colors cursor-pointer"
+            className="text-zinc-500"
             style={{ WebkitAppRegion: 'no-drag' } as any}
             title="Settings"
           >
@@ -66,7 +66,7 @@ export default function Sidebar({
           </button>
           <button
             onClick={onToggle}
-            className="text-zinc-500 hover:text-zinc-200 transition-colors cursor-pointer"
+            className="text-zinc-500"
             style={{ WebkitAppRegion: 'no-drag' } as any}
             title="Toggle Sidebar"
           >
@@ -99,7 +99,7 @@ export default function Sidebar({
               key={playlist.id}
               onContextMenu={(e) => onContextMenu(e, playlist.id)}
               onClick={() => onSelectPlaylist(playlist.id)}
-              className="w-full flex items-center gap-2.5 px-2 py-[5px] rounded-md text-left transition-all select-none cursor-pointer"
+              className="w-full flex items-center gap-2.5 px-2 py-[5px] rounded-md text-left transition-all select-none"
               style={{
                 backgroundColor: isSelected ? 'rgba(255,255,255,0.1)' : 'transparent',
                 color: isSelected ? '#fff' : '#a1a1aa',

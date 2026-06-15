@@ -98,7 +98,7 @@ export default function MusicPlayerControls({
               setIsDragging(false);
               onSeek(Number(e.currentTarget.value));
             }}
-            className="w-full absolute z-20 opacity-0 cursor-pointer h-full m-0"
+            className="w-full absolute z-20 opacity-0 h-full m-0"
           />
           <div className="w-full h-1 bg-white/10 rounded-full relative pointer-events-none">
             {/* Filled track part */}
@@ -121,8 +121,8 @@ export default function MusicPlayerControls({
         {/* Shuffle */}
         <button
           onClick={onToggleShuffle}
-          className={`w-8 h-8 flex items-center justify-center rounded-full transition-all cursor-pointer ${
-            isShuffle ? 'text-white bg-white/10' : 'text-zinc-500 hover:text-white hover:bg-white/[0.07]'
+          className={`w-8 h-8 flex items-center justify-center rounded-full transition-all ${
+            isShuffle ? 'text-white bg-white/10' : 'text-zinc-500 hover:bg-white/[0.07]'
           }`}
         >
           <Shuffle size={14} />
@@ -131,7 +131,7 @@ export default function MusicPlayerControls({
         {/* Previous */}
         <button
           onClick={onPrevious}
-          className="w-9 h-9 flex items-center justify-center rounded-full text-zinc-300 hover:text-white hover:bg-white/[0.07] transition-all cursor-pointer"
+          className="w-9 h-9 flex items-center justify-center rounded-full text-zinc-300 hover:bg-white/[0.07] transition-all"
         >
           <SkipBack size={18} fill="currentColor" />
         </button>
@@ -139,7 +139,7 @@ export default function MusicPlayerControls({
         {/* Play/Pause */}
         <button
           onClick={onPlayPause}
-          className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/10 transition-all cursor-pointer"
+          className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/10 transition-all"
         >
           {isPlaying ? (
             <Pause size={16} fill="currentColor" />
@@ -151,7 +151,7 @@ export default function MusicPlayerControls({
         {/* Next */}
         <button
           onClick={onNext}
-          className="w-9 h-9 flex items-center justify-center rounded-full text-zinc-300 hover:text-white hover:bg-white/[0.07] transition-all cursor-pointer"
+          className="w-9 h-9 flex items-center justify-center rounded-full text-zinc-300 hover:bg-white/[0.07] transition-all"
         >
           <SkipForward size={18} fill="currentColor" />
         </button>
@@ -160,8 +160,8 @@ export default function MusicPlayerControls({
         <div className="relative">
           <button
             onClick={onToggleRepeat}
-            className={`w-8 h-8 flex items-center justify-center rounded-full transition-all cursor-pointer ${
-              repeatMode !== 'off' ? 'text-white bg-white/10' : 'text-zinc-500 hover:text-white hover:bg-white/[0.07]'
+            className={`w-8 h-8 flex items-center justify-center rounded-full transition-all ${
+              repeatMode !== 'off' ? 'text-white bg-white/10' : 'text-zinc-500 hover:bg-white/[0.07]'
             }`}
           >
             <Repeat size={14} />

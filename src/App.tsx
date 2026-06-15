@@ -622,19 +622,19 @@ export default function App() {
                 <label className="text-[13px] text-zinc-400">Library Path</label>
                 <div className="flex gap-2">
                   <input type="text" readOnly value={libraryPath || 'Not set'} className="flex-1 bg-black/20 border border-white/10 rounded px-3 py-1.5 text-[13px] text-white" />
-                  <button onClick={handleSelectFolder} className="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded text-[13px] transition-colors cursor-pointer">Change</button>
+                  <button onClick={handleSelectFolder} className="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded text-[13px] transition-colors">Change</button>
                 </div>
               </div>
               <div className="mt-4 flex flex-col gap-2">
                 <label className="text-[13px] text-zinc-400">Data Management</label>
                 <div>
-                  <button onClick={() => { handleClearLibrary(); setIsSettingsOpen(false); }} className="bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 px-3 py-1.5 rounded text-[13px] transition-colors cursor-pointer">
+                  <button onClick={() => { handleClearLibrary(); setIsSettingsOpen(false); }} className="bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 px-3 py-1.5 rounded text-[13px] transition-colors">
                     Clear Library Cache
                   </button>
                 </div>
               </div>
               <div className="mt-6 flex justify-end">
-                <button onClick={() => setIsSettingsOpen(false)} className="bg-white text-black px-4 py-1.5 rounded-full text-[13px] font-medium hover:bg-zinc-200 transition-colors cursor-pointer">Close</button>
+                <button onClick={() => setIsSettingsOpen(false)} className="bg-white text-black px-4 py-1.5 rounded-full text-[13px] font-medium hover:bg-zinc-200 transition-colors">Close</button>
               </div>
             </div>
           </div>
@@ -674,7 +674,7 @@ export default function App() {
                 <span className="font-sans font-bold text-sm text-white">Create Virtual Playlist Folder</span>
                 <button
                   onClick={() => setIsCreateFolderOpen(false)}
-                  className="p-1 hover:bg-zinc-900 rounded text-zinc-500 hover:text-zinc-300 transition-all cursor-pointer"
+                  className="p-1 hover:bg-zinc-900 rounded text-zinc-500 hover:text-zinc-300 transition-all"
                 >
                   <X size={14} />
                 </button>
@@ -699,14 +699,14 @@ export default function App() {
                 <div className="flex justify-end gap-2 mt-2">
                   <button
                     onClick={() => setIsCreateFolderOpen(false)}
-                    className="px-3.5 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+                    className="px-3.5 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleCreateVirtualFolder}
                     disabled={!newFolderName.trim()}
-                    className="px-4 py-1.5 bg-indigo-500 hover:bg-indigo-600 disabled:bg-zinc-900 disabled:text-zinc-600 font-sans font-semibold text-xs text-white rounded-lg transition-colors cursor-pointer"
+                    className="px-4 py-1.5 bg-indigo-500 hover:bg-indigo-600 disabled:bg-zinc-900 disabled:text-zinc-600 font-sans font-semibold text-xs text-white rounded-lg transition-colors"
                   >
                     Mount Folder
                   </button>

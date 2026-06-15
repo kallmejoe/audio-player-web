@@ -74,7 +74,7 @@ input[type="range"]:hover::-moz-range-thumb {
   animation: fadeIn 0.3s ease-in-out forwards;
 }
 
-#soundflow-layout-system {
+#molly-layout-system {
   -webkit-app-region: no-drag;
 }
 

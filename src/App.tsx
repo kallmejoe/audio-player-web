@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
   const [tracks, setTracks] = useState<Track[]>(() => {
-    const saved = localStorage.getItem('soundflow-tracks-v2');
+    const saved = localStorage.getItem('molly-tracks-v2');
     if (saved) {
       try {
         let parsed = JSON.parse(saved);
@@ -54,7 +54,7 @@ export default function App() {
   const [newFolderName, setNewFolderName] = useState<string>('');
   const [libraryPath, setLibraryPath] = useState<string | null>(null);
   const [sidebarExpanded, setSidebarExpanded] = useState<boolean>(() => {
-    const saved = localStorage.getItem('soundflow-sidebar-expanded');
+    const saved = localStorage.getItem('molly-sidebar-expanded');
     return saved !== null ? JSON.parse(saved) : true;
   });
 
@@ -72,11 +72,11 @@ export default function App() {
   }, [tracks]);
 
   useEffect(() => {
-    localStorage.setItem('soundflow-tracks-v2', JSON.stringify(tracks));
+    localStorage.setItem('molly-tracks-v2', JSON.stringify(tracks));
   }, [tracks]);
 
   useEffect(() => {
-    localStorage.setItem('soundflow-sidebar-expanded', JSON.stringify(sidebarExpanded));
+    localStorage.setItem('molly-sidebar-expanded', JSON.stringify(sidebarExpanded));
   }, [sidebarExpanded]);
 
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
@@ -561,7 +561,7 @@ export default function App() {
     <div
       className="w-full h-screen text-white flex overflow-hidden relative antialiased"
       style={{ backgroundColor: '#0a0a0a' }}
-      id="soundflow-layout-system"
+      id="molly-layout-system"
     >
       <div className="flex-1 flex min-h-0">
         <Sidebar
@@ -682,7 +682,7 @@ export default function App() {
 
               <div className="flex flex-col gap-3 font-sans">
                 <p className="text-[11.5px] text-zinc-400">
-                  Enter a custom folder category. SoundFlow flattens subdirectories to build separated discrete playlists.
+                  Enter a custom folder category. Molly flattens subdirectories to build separated discrete playlists.
                 </p>
 
                 <div className="flex flex-col gap-1.5">

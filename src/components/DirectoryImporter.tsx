@@ -241,11 +241,11 @@ export default function DirectoryImporter({ onClose, onImportTracks, onClearLibr
           {electronMode ? (
             <p className="text-[13px] text-zinc-300">
               Select a folder on your computer to use as your music library.
-              SoundFlow will watch for changes and auto-update.
+              Molly will watch for changes and auto-update.
             </p>
           ) : (
             <p className="text-[13px] text-zinc-300">
-              Select a folder on your computer to import its audio files and subfolders into your SoundFlow library.
+              Select a folder on your computer to import its audio files and subfolders into your Molly library.
             </p>
           )}
 

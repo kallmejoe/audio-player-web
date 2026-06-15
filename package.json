@@ -1,5 +1,6 @@
 {
-  "name": "soundflow",
+  "name": "molly",
+  "author": "Youssef Tarek",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -18,8 +19,8 @@
     "lint": "tsc --noEmit"
   },
   "build": {
-    "appId": "com.soundflow.app",
-    "productName": "SoundFlow",
+    "appId": "com.molly.app",
+    "productName": "Molly",
     "directories": {
       "output": "release"
     },
@@ -45,7 +46,7 @@
       "hardenedRuntime": true
     },
     "dmg": {
-      "title": "SoundFlow",
+      "title": "Molly",
       "icon": "assets/icon.png",
       "iconSize": 128
     }

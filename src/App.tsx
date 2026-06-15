@@ -295,9 +295,10 @@ export default function App() {
     setSelectedPlaylistId(folderPlaylistId);
   };
 
-  // Clear a playlist's tracks completely
+  // Clear a playlist's tracks completely and remove it
   const handleRemovePlaylist = (playlistId: string) => {
     setTracks((prev) => prev.filter((t) => t.playlistId !== playlistId));
+    setPlaylists((prev) => prev.filter((p) => p.id !== playlistId));
     if (selectedPlaylistId === playlistId) {
       setSelectedPlaylistId(null);
     }

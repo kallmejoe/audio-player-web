@@ -53,10 +53,10 @@ export default function PlaylistView({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col pb-[120px] relative bg-transparent" id="playlist-view">
+    <div className="flex-1 flex flex-col bg-black/40 backdrop-blur-2xl relative overflow-hidden" id="playlist-view">
 
       {/* Compact Header for Playlist */}
-      <div className="flex flex-row items-end gap-5 mb-6 select-none shrink-0 border-b border-white/5 pb-5 px-8 pt-10">
+      <div className="flex flex-row items-end gap-5 mb-2 select-none shrink-0 border-b border-white/5 pb-5 px-8 pt-10">
         <div className="relative shrink-0 w-24 h-24 rounded-lg overflow-hidden bg-white/5 border border-white/10 shadow-lg flex items-center justify-center">
           {coverUrl ? (
             <img 
@@ -105,9 +105,9 @@ export default function PlaylistView({
       </div>
 
       {/* Track List Section */}
-      <div className="flex flex-col px-8">
+      <div className="flex-1 flex flex-col min-h-0 px-8 pb-32">
         {/* Table Header */}
-        <div className="flex items-center justify-between border-b border-[#2d2d2d] pb-2 px-2 select-none mb-2">
+        <div className="flex items-center justify-between border-b border-[#2d2d2d] pb-2 px-2 select-none mb-2 shrink-0">
           <div className="flex items-center gap-4 text-[12px] font-medium text-zinc-500 w-full">
             <span className="w-8 text-center text-xs">#</span>
             <span className="flex-1">Title</span>
@@ -116,7 +116,7 @@ export default function PlaylistView({
         </div>
 
         {/* Tracks List */}
-        <div className="flex flex-col pb-6">
+        <div className="flex-1 overflow-y-auto no-scrollbar pb-6">
           {tracks.length === 0 ? (
             <div className="w-full h-32 flex items-center justify-center text-zinc-500 text-sm">
               This folder is empty.

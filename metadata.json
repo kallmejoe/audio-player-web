@@ -1,0 +1,6 @@
+{
+  "name": "Music Player",
+  "description": "A high-performance modern music player inspired by Apple Music and Vercel/Linear design languages, supporting folder-based playlists, subfolder flattening, and local playback.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

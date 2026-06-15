@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Play, Pause, SkipForward, SkipBack, Shuffle, Repeat } from 'lucide-react';
 import { Track, PlaybackState } from '../types';
 
@@ -27,7 +28,18 @@ export default function MusicPlayerControls({
 }: MusicPlayerControlsProps) {
   const { isPlaying, isShuffle, repeatMode, currentTime } = playbackState;
 
+  const [localTime, setLocalTime] = useState(currentTime);
+  const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    if (!isDragging) {
+      setLocalTime(currentTime);
+    }
+  }, [currentTime, isDragging]);
+
   if (!currentTrack) return null;
+
+  const progressPercent = currentTrack.duration > 0 ? (localTime / currentTrack.duration) * 100 : 0;
 
   const formatTime = (secs: number) => {
     if (isNaN(secs)) return '0:00';
@@ -68,26 +80,36 @@ export default function MusicPlayerControls({
 
       {/* Progress / Seek */}
       <div className="flex items-center gap-2 w-[220px] px-2 shrink-0 group">
-        <span className="text-[10px] text-zinc-500 font-mono w-8 text-right">{formatTime(currentTime)}</span>
+        <span className="text-[10px] text-zinc-500 font-mono w-8 text-right">{formatTime(localTime)}</span>
         <div className="relative flex-1 flex items-center h-4">
           <input
             type="range"
             min={0}
             max={currentTrack.duration || 100}
-            value={currentTime}
-            onChange={(e) => onSeek(Number(e.target.value))}
+            value={localTime}
+            onMouseDown={() => setIsDragging(true)}
+            onTouchStart={() => setIsDragging(true)}
+            onChange={(e) => setLocalTime(Number(e.target.value))}
+            onMouseUp={(e) => {
+              setIsDragging(false);
+              onSeek(Number(e.currentTarget.value));
+            }}
+            onTouchEnd={(e) => {
+              setIsDragging(false);
+              onSeek(Number(e.currentTarget.value));
+            }}
             className="w-full absolute z-20 opacity-0 cursor-pointer h-full m-0"
           />
           <div className="w-full h-1 bg-white/10 rounded-full relative pointer-events-none">
             {/* Filled track part */}
             <div 
               className="absolute top-0 left-0 h-full bg-white rounded-full" 
-              style={{ width: `${playbackState.progress}%` }} 
+              style={{ width: `${progressPercent}%` }} 
             />
             {/* Thumb indicator */}
             <div 
               className="absolute top-1/2 -translate-y-1/2 -ml-[5px] w-[10px] h-[10px] bg-white rounded-full shadow-sm"
-              style={{ left: `${playbackState.progress}%` }}
+              style={{ left: `${progressPercent}%` }}
             />
           </div>
         </div>

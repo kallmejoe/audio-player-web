@@ -1,5 +1,6 @@
 import { Search, PanelLeft, Settings } from 'lucide-react';
 import { Playlist } from '../types';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface SidebarProps {
   playlists: Playlist[];
@@ -27,17 +28,22 @@ export default function Sidebar({
   onContextMenu,
   onOpenSettings,
 }: SidebarProps) {
-  if (!expanded) return null;
-
   return (
-    <aside
-      id="app-sidebar"
-      className="h-full flex flex-col shrink-0"
-      style={{ width: 240, backgroundColor: '#0a0a0a', borderRight: '1px solid rgba(255,255,255,0.05)' }}
-    >
-      {/* Traffic lights row + sidebar toggle icon */}
-      <div
-        className="shrink-0 flex items-center justify-between px-4"
+    <AnimatePresence initial={false}>
+      {expanded && (
+        <motion.aside
+          initial={{ width: 0, opacity: 0 }}
+          animate={{ width: 240, opacity: 1 }}
+          exit={{ width: 0, opacity: 0 }}
+          transition={{ duration: 0.25, ease: 'easeInOut' }}
+          id="app-sidebar"
+          className="h-full flex flex-col shrink-0 overflow-hidden"
+          style={{ backgroundColor: '#0a0a0a', borderRight: '1px solid rgba(255,255,255,0.05)' }}
+        >
+          <div style={{ width: 240 }} className="h-full flex flex-col shrink-0">
+            {/* Traffic lights row + sidebar toggle icon */}
+            <div
+              className="shrink-0 flex items-center justify-between px-4"
         style={{ height: 48, WebkitAppRegion: 'drag' } as any}
       >
         {/* macOS native traffic lights live here — just reserve space on left */}
@@ -123,8 +129,10 @@ export default function Sidebar({
             </button>
           );
         })}
-      </div>
-
-    </aside>
+            </div>
+          </div>
+        </motion.aside>
+      )}
+    </AnimatePresence>
   );
 }

@@ -1,153 +1,130 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
-import { Folder, Disc, Plus, Layers, Laptop, Music, Volume2, Search, Trash2 } from 'lucide-react';
+import { Search, PanelLeft, Settings } from 'lucide-react';
 import { Playlist } from '../types';
-import { motion } from 'motion/react';
 
 interface SidebarProps {
   playlists: Playlist[];
   selectedPlaylistId: string | null;
+  expanded: boolean;
+  onToggle: () => void;
   onSelectPlaylist: (id: string | null) => void;
   onImportClick: () => void;
   onCreateFolderClick: () => void;
-  onRemovePlaylist: (id: string) => void;
   searchTerm: string;
   onSearchChange: (val: string) => void;
+  libraryPath?: string | null;
+  onContextMenu: (e: import('react').MouseEvent, playlistId: string) => void;
+  onOpenSettings: () => void;
 }
 
 export default function Sidebar({
   playlists,
   selectedPlaylistId,
+  expanded,
+  onToggle,
   onSelectPlaylist,
-  onImportClick,
-  onCreateFolderClick,
-  onRemovePlaylist,
   searchTerm,
   onSearchChange,
+  onContextMenu,
+  onOpenSettings,
 }: SidebarProps) {
+  if (!expanded) return null;
+
   return (
     <aside
-      className="w-[220px] h-full bg-white/[0.02] backdrop-blur-3xl border-r border-white/5 flex flex-col justify-between shrink-0"
       id="app-sidebar"
+      className="h-full flex flex-col shrink-0"
+      style={{ width: 240, backgroundColor: '#0a0a0a', borderRight: '1px solid rgba(255,255,255,0.05)' }}
     >
-      {/* Brand & Filter Section */}
-      <div className="flex flex-col p-3 pt-5 gap-4">
-        {/* Brand */}
-        <div className="flex items-center gap-2 px-2.5 mb-1">
-          <Music size={18} className="text-[#fa243c]" />
-          <span className="font-sans font-semibold tracking-tight text-white text-[15px]">SoundFlow</span>
-        </div>
-
-        {/* Global Search Bar */}
-        <div className="relative px-2">
-          <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
-          <input
-            type="text"
-            placeholder="Search"
-            value={searchTerm}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full bg-white/5 border border-white/5 rounded-md py-1 pl-8 pr-3 text-[13px] text-zinc-200 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all font-sans placeholder:font-medium"
-          />
-        </div>
-
-        {/* Quick Lists */}
-        <div className="flex flex-col gap-0.5 px-2">
-          <span className="text-[11px] font-semibold text-zinc-400 px-2 mb-1">Library</span>
-          
+      {/* Traffic lights row + sidebar toggle icon */}
+      <div
+        className="shrink-0 flex items-center justify-between px-4"
+        style={{ height: 48, WebkitAppRegion: 'drag' } as any}
+      >
+        {/* macOS native traffic lights live here — just reserve space on left */}
+        <div style={{ width: 60 }} />
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => onSelectPlaylist(null)}
-            className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[13px] font-sans transition-all w-full text-left ${
-              selectedPlaylistId === null
-                ? 'bg-white/10 text-white font-medium'
-                : 'text-zinc-300 hover:bg-white/5'
-            }`}
+            onClick={onOpenSettings}
+            className="text-zinc-500 hover:text-zinc-200 transition-colors cursor-pointer"
+            style={{ WebkitAppRegion: 'no-drag' } as any}
+            title="Settings"
           >
-            <Disc size={15} className="text-[#fa243c]" />
-            <span>All Songs</span>
+            <Settings size={14} />
+          </button>
+          <button
+            onClick={onToggle}
+            className="text-zinc-500 hover:text-zinc-200 transition-colors cursor-pointer"
+            style={{ WebkitAppRegion: 'no-drag' } as any}
+            title="Toggle Sidebar"
+          >
+            <PanelLeft size={16} />
           </button>
         </div>
+      </div>
 
-        {/* Folder Playlists Tree */}
-        <div className="flex flex-col gap-0.5 mt-4 px-2">
-          <div className="flex justify-between items-center px-2 mb-1">
-            <span className="text-[11px] font-semibold text-zinc-400">Playlists</span>
-            <button
-              onClick={onCreateFolderClick}
-              title="Create Folder Playlist"
-              className="p-1 rounded text-zinc-400 hover:text-white transition-all cursor-pointer"
-            >
-              <Plus size={14} />
-            </button>
-          </div>
-
-          <div className="flex flex-col gap-0.5 max-h-[400px] overflow-y-auto no-scrollbar">
-            {playlists.length === 0 ? (
-              <div className="text-[12px] text-zinc-500 px-3 py-4 text-center">
-                No folders found.
-              </div>
-            ) : (
-              playlists.map((playlist) => {
-                const isSelected = selectedPlaylistId === playlist.id;
-                return (
-                  <div
-                    key={playlist.id}
-                    className="group flex items-center justify-between rounded-md transition-all"
-                  >
-                    <button
-                      onClick={() => onSelectPlaylist(playlist.id)}
-                      className={`flex-1 flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[13px] font-sans text-left overflow-hidden transition-all ${
-                        isSelected ? 'bg-white/10 text-white font-medium' : 'text-zinc-300 hover:bg-white/5'
-                      }`}
-                    >
-                      {playlist.coverUrl ? (
-                          <div className={`relative shrink-0 w-5 h-5 rounded overflow-hidden bg-white/10 shadow-sm border border-white/5`}>
-                            <img 
-                              src={playlist.coverUrl} 
-                              alt="" 
-                              className="w-full h-full object-cover"
-                              referrerPolicy="no-referrer"
-                            />
-                          </div>
-                        ) : (
-                          <Folder size={15} className="text-[#fa243c]" />
-                        )}
-
-                      <div className="truncate flex-1 pt-[1px]">
-                        {playlist.name}
-                      </div>
-                    </button>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onRemovePlaylist(playlist.id);
-                      }}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-950/40 rounded text-zinc-500 hover:text-red-400 transition-all cursor-pointer"
-                      title="Remove Playlist"
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  </div>
-                );
-              })
-            )}
-          </div>
+      {/* Search */}
+      <div className="px-3 pb-2 shrink-0">
+        <div className="relative">
+          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search playlists"
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="w-full rounded-md h-[28px] pl-8 pr-3 text-[12px] text-zinc-300 placeholder-zinc-600 focus:outline-none transition-all"
+            style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+          />
         </div>
       </div>
 
-      {/* Footer / System Control */}
-      <div className="p-4">
-        <button
-          onClick={onImportClick}
-          className="w-full flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/5 text-[13px] font-medium text-white rounded-md py-1.5 select-none transition-all cursor-pointer"
-        >
-          <Layers size={14} className="text-zinc-400" />
-          <span>Import Folders</span>
-        </button>
+      {/* Playlist list — scrollable */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-1 pb-2" style={{ scrollbarWidth: 'none' }}>
+        {playlists.map((playlist) => {
+          const isSelected = selectedPlaylistId === playlist.id;
+          return (
+            <button
+              key={playlist.id}
+              onContextMenu={(e) => onContextMenu(e, playlist.id)}
+              onClick={() => onSelectPlaylist(playlist.id)}
+              className="w-full flex items-center gap-2.5 px-2 py-[5px] rounded-md text-left transition-all select-none cursor-pointer"
+              style={{
+                backgroundColor: isSelected ? 'rgba(255,255,255,0.1)' : 'transparent',
+                color: isSelected ? '#fff' : '#a1a1aa',
+              }}
+              onMouseEnter={(e) => {
+                if (!isSelected) (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.05)';
+              }}
+              onMouseLeave={(e) => {
+                if (!isSelected) (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+              }}
+            >
+              {/* Large square cover — like reference */}
+              <div
+                className="shrink-0 rounded overflow-hidden"
+                style={{
+                  width: 28,
+                  height: 28,
+                  backgroundColor: '#2a2a2c',
+                  border: '1px solid rgba(255,255,255,0.05)',
+                }}
+              >
+                {playlist.coverUrl ? (
+                  <img src={playlist.coverUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-[11px]">🎵</div>
+                )}
+              </div>
+              <span
+                className="truncate"
+                style={{ fontSize: 13, lineHeight: '1.3', color: isSelected ? '#ffffff' : '#d4d4d8', fontWeight: isSelected ? 500 : 400 }}
+              >
+                {playlist.name}
+              </span>
+            </button>
+          );
+        })}
       </div>
+
     </aside>
   );
 }

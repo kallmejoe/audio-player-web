@@ -1,20 +1,18 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
-import { Play, Shuffle, Folder, FolderTree, Clock, ChevronRight, Music, AudioLines } from 'lucide-react';
+import { useState } from 'react';
+import { Play, Pause, Search, Clock, PanelLeft } from 'lucide-react';
 import { Playlist, Track } from '../types';
-import { motion, AnimatePresence } from 'motion/react';
-import AudioVisualizer from './AudioVisualizer';
 
 interface PlaylistViewProps {
-  playlist: Playlist | null; // null means "All Files"
+  playlist: Playlist | null;
   tracks: Track[];
   currentTrackId: string | null;
   isPlaying: boolean;
   onTrackSelect: (trackId: string) => void;
   onPlayPlaylist: (playlistId: string | null, shuffle: boolean) => void;
+  songSearchTerm: string;
+  onSongSearchChange: (val: string) => void;
+  sidebarExpanded: boolean;
+  onToggleSidebar: () => void;
 }
 
 export default function PlaylistView({
@@ -23,154 +21,168 @@ export default function PlaylistView({
   currentTrackId,
   isPlaying,
   onTrackSelect,
-  onPlayPlaylist,
+  songSearchTerm,
+  onSongSearchChange,
+  sidebarExpanded,
+  onToggleSidebar,
 }: PlaylistViewProps) {
   const isAllTracks = playlist === null;
-  
-  // Header title & folder structure
-  const title = isAllTracks ? 'Library Vault' : playlist.name;
-  const breadcrumbs = isAllTracks ? ['All Audio Files'] : playlist.folderPath.split('/');
-
-  // Calculate stats
-  const totalDuration = tracks.reduce((acc, t) => acc + t.duration, 0);
-  const totalDurationStr = `${Math.floor(totalDuration / 60)} min`;
-  const trackCountStr = `${tracks.length} ${tracks.length === 1 ? 'file' : 'files'}`;
-
-  // Cover design: select gradient
-  const coverGradient = isAllTracks
-    ? 'from-[#c084fc] via-[#6366f1] to-[#38bdf8]'
-    : playlist.coverGradient;
-
-  // Fallback cover image lookup (from folder structure or first track carrying a cover)
-  const coverUrl = isAllTracks
-    ? undefined
-    : (playlist.coverUrl || (tracks.length > 0 ? tracks.find(t => t.coverUrl)?.coverUrl : undefined));
-
-  const formatTrackDuration = (secs: number) => {
-    const m = Math.floor(secs / 60);
-    const s = Math.floor(secs % 60);
-    return `${m}:${s < 10 ? '0' : ''}${s}`;
-  };
+  const title = isAllTracks ? 'All Songs' : playlist.name;
+  const subtitle = isAllTracks ? '' : (playlist.folderPath !== playlist.name ? playlist.folderPath : '');
 
   return (
-    <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col relative bg-transparent" id="playlist-view">
-
-      {/* Compact Header for Playlist (Sticky) */}
-      <div className="flex flex-row items-end gap-5 select-none shrink-0 border-b border-white/5 pb-5 px-8 pt-10 sticky top-0 z-10 bg-black/20 backdrop-blur-3xl">
-        <div className="relative shrink-0 w-24 h-24 rounded-lg overflow-hidden bg-white/5 border border-white/10 shadow-lg flex items-center justify-center">
-          {coverUrl ? (
-            <img 
-              src={coverUrl} 
-              alt={title}
-              className="w-full h-full object-cover relative z-10"
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            <>
-              <div className={`absolute inset-0 bg-gradient-to-br ${coverGradient} opacity-20`} />
-              <Folder size={32} className="text-white backdrop-blur-md relative z-10 drop-shadow-md" />
-            </>
+    <div
+      id="playlist-view"
+      className="flex-1 min-w-0 flex flex-col overflow-hidden"
+      style={{ backgroundColor: '#0a0a0a' }}
+    >
+      {/* ── Header row ─────────────────────────────────────────── */}
+      <div
+        className="shrink-0 flex items-center justify-between px-6"
+        style={{
+          paddingTop: 14,
+          paddingBottom: 10,
+          height: 56,
+          borderBottom: '1px solid rgba(255,255,255,0.04)',
+        }}
+      >
+        {/* Left: sidebar toggle (when hidden) + title block */}
+        <div className="flex items-center gap-3 min-w-0">
+          {!sidebarExpanded && (
+            <button
+              onClick={onToggleSidebar}
+              className="shrink-0 text-zinc-500 hover:text-white transition-colors"
+              style={{ marginTop: 2 }}
+            >
+              <PanelLeft size={16} />
+            </button>
           )}
+          <div className="min-w-0">
+            <h1
+              className="text-white font-semibold truncate leading-tight"
+              style={{ fontSize: 18, letterSpacing: '-0.3px' }}
+            >
+              {title}
+            </h1>
+            {subtitle && (
+              <p className="truncate mt-0.5" style={{ fontSize: 13, color: '#71717a' }}>
+                {subtitle}
+              </p>
+            )}
+          </div>
         </div>
 
-        <div className="flex flex-col min-w-0">
-          <span className="text-[11px] font-semibold text-zinc-400 tracking-wider uppercase mb-1">
-            {isAllTracks ? 'Library' : 'Playlist'}
-          </span>
-          <h1 className="font-sans font-bold text-2xl md:text-3xl text-white truncate leading-tight tracking-tight mb-2">
-            {title}
-          </h1>
-          <div className="flex items-center gap-2 text-[12px] text-zinc-400 font-sans mb-3">
-            <span className="font-medium">{trackCountStr}</span>
-            <span>•</span>
-            <span>{totalDurationStr}</span>
-          </div>
-
-          <div className="flex items-center gap-2.5">
-            <button
-              onClick={() => onPlayPlaylist(isAllTracks ? null : playlist.id, false)}
-              disabled={tracks.length === 0}
-              className="px-6 py-2 bg-[#fa243c] text-white hover:bg-[#e02035] disabled:bg-zinc-800 disabled:text-zinc-500 font-sans font-semibold text-sm rounded-md transition-colors flex items-center gap-2 cursor-pointer"
-            >
-              <Play size={13} fill="currentColor" />
-              <span>Play</span>
-            </button>
-            <button
-              onClick={() => onPlayPlaylist(isAllTracks ? null : playlist.id, true)}
-              disabled={tracks.length === 0}
-              className="px-6 py-2 bg-[#2c2c2e] hover:bg-[#3c3c3e] text-white disabled:bg-zinc-800 disabled:text-zinc-500 font-sans font-semibold text-sm rounded-md transition-colors flex items-center gap-2 cursor-pointer"
-            >
-              <Shuffle size={13} />
-              <span>Shuffle</span>
-            </button>
+        {/* Right: search bar (always visible, like reference) */}
+        <div className="shrink-0 flex items-center gap-3">
+          <div className="relative flex items-center">
+            <Search size={14} className="absolute left-3 text-zinc-500 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search..."
+              value={songSearchTerm}
+              onChange={(e) => onSongSearchChange(e.target.value)}
+              className="rounded-lg h-[32px] pl-9 pr-4 text-[13px] text-zinc-300 placeholder-zinc-600 focus:outline-none border transition-all"
+              style={{
+                width: 'clamp(140px, 20vw, 220px)',
+                backgroundColor: 'rgba(255,255,255,0.06)',
+                borderColor: 'rgba(255,255,255,0.1)',
+              }}
+            />
           </div>
         </div>
       </div>
 
-      {/* Track List Section */}
-      <div className="flex-1 flex flex-col min-h-0 px-8 pb-[140px] pt-4">
-        {/* Table Header */}
-        <div className="flex items-center justify-between border-b border-[#2d2d2d] pb-2 px-2 select-none mb-2 shrink-0">
-          <div className="flex items-center gap-4 text-[12px] font-medium text-zinc-500 w-full">
-            <span className="w-8 text-center text-xs">#</span>
-            <span className="flex-1">Title</span>
-            <span className="w-16 text-right">Time</span>
+      {/* ── Column headers ──────────────────────────────────────── */}
+      <div
+        className="shrink-0 flex items-center px-6 py-1.5"
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+      >
+        <div className="w-8 mr-3 flex justify-center">
+          <div className="w-[5px] h-[5px] rounded-full" style={{ backgroundColor: '#52525b' }} />
+        </div>
+        <div className="flex-[2] min-w-0 text-[11px] font-medium tracking-wide" style={{ color: '#71717a' }}>Title</div>
+        <div className="flex-[1.2] min-w-0 text-[11px] font-medium tracking-wide hidden sm:block" style={{ color: '#71717a' }}>Artist</div>
+        <div className="flex-[1.2] min-w-0 text-[11px] font-medium tracking-wide hidden lg:block" style={{ color: '#71717a' }}>Album</div>
+        <div className="w-12 shrink-0 flex justify-end">
+          <Clock size={13} style={{ color: '#52525b' }} />
+        </div>
+      </div>
+
+      {/* ── Track list — scrollable ──────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden pb-28" style={{ scrollbarWidth: 'none' }}>
+        {tracks.length === 0 ? (
+          <div className="flex items-center justify-center h-40" style={{ color: '#52525b', fontSize: 13 }}>
+            No songs found
           </div>
-        </div>
+        ) : (
+          tracks.map((track, index) => {
+            const isActive = currentTrackId === track.id;
+            const isEven = index % 2 === 0;
+            const baseBg = isEven ? 'transparent' : 'rgba(255,255,255,0.015)';
+            return (
+              <div
+                key={track.id}
+                className="group flex items-center px-6 py-[5px] cursor-pointer transition-colors select-none"
+                style={{ backgroundColor: baseBg }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.04)';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.backgroundColor = baseBg;
+                }}
+                onClick={() => onTrackSelect(track.id)}
+              >
+                {/* Cover thumbnail with play/pause overlay */}
+                <div className="w-8 h-8 shrink-0 mr-3 relative rounded overflow-hidden" style={{ backgroundColor: '#2a2a2c' }}>
+                  {isActive ? (
+                    <div className="absolute inset-0 flex items-center justify-center z-10" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                      {isPlaying
+                        ? <Pause size={11} fill="white" className="text-white" />
+                        : <Play size={11} fill="white" className="text-white ml-px" />
+                      }
+                    </div>
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
+                      <Play size={11} fill="white" className="text-white ml-px" />
+                    </div>
+                  )}
+                  {track.coverUrl && (
+                    <img src={track.coverUrl} className="w-full h-full object-cover" alt="" />
+                  )}
+                </div>
 
-        {/* Tracks List */}
-        <div className="flex flex-col pb-6">
-          {tracks.length === 0 ? (
-            <div className="w-full h-32 flex items-center justify-center text-zinc-500 text-sm">
-              This folder is empty.
-            </div>
-          ) : (
-            <div className="flex flex-col">
-              {tracks.map((track, idx) => {
-                const isActive = currentTrackId === track.id;
-                return (
-                  <div
-                    key={track.id}
-                    className={`group w-full flex items-center justify-between px-2 py-2 rounded-md text-left cursor-pointer transition-colors ${
-                      isActive ? 'bg-[#fa243c]/10' : 'hover:bg-white/5'
-                    }`}
-                    onClick={() => onTrackSelect(track.id)}
+                {/* Title */}
+                <div className="flex-[2] min-w-0 pr-4">
+                  <span
+                    className="truncate block leading-tight"
+                    style={{
+                      fontSize: 13,
+                      fontWeight: isActive ? 600 : 400,
+                      color: isActive ? '#ffffff' : '#e4e4e7',
+                    }}
                   >
-                    <div className="flex items-center gap-4 min-w-0 flex-1">
-                      <div className="w-8 flex justify-center items-center shrink-0">
-                        {isActive && isPlaying ? (
-                          <AudioLines size={14} className="text-[#fa243c]" />
-                        ) : (
-                          <span className={`text-xs ${isActive ? 'text-[#fa243c]' : 'text-zinc-500'} group-hover:hidden`}>
-                            {idx + 1}
-                          </span>
-                        )}
-                        <span className={`hidden group-hover:block transition-all ${isActive ? 'text-[#fa243c]' : 'text-white'}`}>
-                          <Play size={10} fill="currentColor" />
-                        </span>
-                      </div>
+                    {track.title}
+                  </span>
+                </div>
 
-                      {/* Title & Artist */}
-                      <div className="flex flex-col min-w-0">
-                        <span className={`text-[14px] truncate ${isActive ? 'text-[#fa243c]' : 'text-zinc-200'}`}>
-                          {track.title}
-                        </span>
-                        <span className="text-[12px] text-zinc-500 truncate group-hover:text-zinc-400">
-                          {track.artist}
-                        </span>
-                      </div>
-                    </div>
+                {/* Artist */}
+                <div className="flex-[1.2] min-w-0 pr-4 truncate hidden sm:block" style={{ fontSize: 13, color: '#a1a1aa' }}>
+                  {track.artist}
+                </div>
 
-                    {/* Duration */}
-                    <div className="flex items-center gap-4 shrink-0 text-[12px] text-zinc-500 w-16 justify-end">
-                      {formatTrackDuration(track.duration)}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+                {/* Album */}
+                <div className="flex-[1.2] min-w-0 pr-4 truncate hidden lg:block" style={{ fontSize: 13, color: '#71717a' }}>
+                  {track.album}
+                </div>
+
+                {/* Duration */}
+                <div className="w-12 shrink-0 text-right" style={{ fontSize: 13, color: '#71717a' }}>
+                  {Math.floor(track.duration / 60)}:{String(Math.floor(track.duration % 60)).padStart(2, '0')}
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );

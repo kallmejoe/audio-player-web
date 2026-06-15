@@ -1,26 +1,43 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Track, Playlist, PlaybackState } from './types';
 import Sidebar from './components/Sidebar';
 import PlaylistView from './components/PlaylistView';
 import MusicPlayerControls from './components/MusicPlayerControls';
 import DirectoryImporter from './components/DirectoryImporter';
+import ContextMenu from './components/ContextMenu';
+import type { ContextMenuAction } from './components/ContextMenu';
 import { INITIAL_SYNTHESIZED_TRACKS, buildPlaylistsFromTracks } from './utils/sampleLibrary';
 import { audioEngine } from './utils/audioEngine';
-import { Plus, X, FolderMinus } from 'lucide-react';
+import { X, Play, Shuffle, Trash2, FolderInput } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
-  // --- Persistent Storage State initialization ---
   const [tracks, setTracks] = useState<Track[]>(() => {
     const saved = localStorage.getItem('soundflow-tracks-v2');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        let parsed = JSON.parse(saved);
+        // Migrate old URLs from cache
+        parsed = parsed.map((track: any) => {
+          if (track.url && track.url.startsWith('local-file:///') && !track.url.includes('?path=')) {
+            let rawPath = track.url.replace('local-file://', '');
+            // Some old URLs might have been encoded with encodeURI
+            if (rawPath.includes('%20')) rawPath = decodeURI(rawPath);
+            track.url = `local-file://get?path=${encodeURIComponent(rawPath)}`;
+          }
+          if (track.coverUrl && track.coverUrl.startsWith('id3-cover:///') && !track.coverUrl.includes('?path=')) {
+            let rawPath = track.coverUrl.replace('id3-cover://', '');
+            if (rawPath.includes('%20')) rawPath = decodeURI(rawPath);
+            track.coverUrl = `id3-cover://get?path=${encodeURIComponent(rawPath)}`;
+          }
+          if (track.coverUrl && track.coverUrl.startsWith('local-file:///') && !track.coverUrl.includes('?path=')) {
+            let rawPath = track.coverUrl.replace('local-file://', '');
+            if (rawPath.includes('%20')) rawPath = decodeURI(rawPath);
+            track.coverUrl = `local-file://get?path=${encodeURIComponent(rawPath)}`;
+          }
+          return track;
+        });
+        return parsed;
       } catch (e) {
         console.error('Failed to load cached tracks:', e);
       }
@@ -29,28 +46,39 @@ export default function App() {
   });
 
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [playlistSearchTerm, setPlaylistSearchTerm] = useState<string>('');
+  const [songSearchTerm, setSongSearchTerm] = useState<string>('');
+  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isImportOpen, setIsImportOpen] = useState<boolean>(false);
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState<boolean>(false);
   const [newFolderName, setNewFolderName] = useState<string>('');
+  const [libraryPath, setLibraryPath] = useState<string | null>(null);
+  const [sidebarExpanded, setSidebarExpanded] = useState<boolean>(() => {
+    const saved = localStorage.getItem('soundflow-sidebar-expanded');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
 
-  // --- Dynamic calculations from tracks system ---
-  // Re-build playlists folder separation whenever tracks list changes
+  const [contextMenu, setContextMenu] = useState<{
+    position: { x: number; y: number };
+    playlistId: string;
+  } | null>(null);
+
   const { playlists, processedPool } = useMemo(() => {
     const res = buildPlaylistsFromTracks(tracks);
     return {
       playlists: res.playlists,
-      // map tracks properly maintaining their parsed playlist relations
       processedPool: res.updatedTracks,
     };
   }, [tracks]);
 
-  // Save to locale storage whenever directories update
   useEffect(() => {
     localStorage.setItem('soundflow-tracks-v2', JSON.stringify(tracks));
   }, [tracks]);
 
-  // Active playing states
+  useEffect(() => {
+    localStorage.setItem('soundflow-sidebar-expanded', JSON.stringify(sidebarExpanded));
+  }, [sidebarExpanded]);
+
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
   const [playbackState, setPlaybackState] = useState<PlaybackState>({
     isPlaying: false,
@@ -69,40 +97,44 @@ export default function App() {
     return processedPool.find((t) => t.id === currentTrackId) || null;
   }, [currentTrackId, processedPool]);
 
-  // Find playlist gradient for current track background Art glow
   const currentPlaylistGradient = useMemo(() => {
     if (!activeTrack) return undefined;
     const play = playlists.find((p) => p.id === activeTrack.playlistId);
     return play ? play.coverGradient : undefined;
   }, [activeTrack, playlists]);
 
-  // Filtered tracks list in active playlist matching Search filters
   const visibleTracks = useMemo(() => {
     let list = processedPool;
     if (selectedPlaylistId !== null) {
       list = list.filter((t) => t.playlistId === selectedPlaylistId);
     }
-    if (searchTerm.trim() !== '') {
-      const query = searchTerm.toLowerCase();
+    if (songSearchTerm.trim() !== '') {
+      const query = songSearchTerm.toLowerCase();
       list = list.filter(
         (t) =>
           t.title.toLowerCase().includes(query) ||
           t.artist.toLowerCase().includes(query) ||
-          t.filePath.toLowerCase().includes(query)
+          (t.filePath && t.filePath.toLowerCase().includes(query))
       );
     }
     return list;
-  }, [processedPool, selectedPlaylistId, searchTerm]);
+  }, [processedPool, selectedPlaylistId, songSearchTerm]);
 
-  // Playlist we are currently browsing details of
+  const visiblePlaylists = useMemo(() => {
+    let list = playlists;
+    if (playlistSearchTerm.trim() !== '') {
+      const query = playlistSearchTerm.toLowerCase();
+      list = list.filter(p => p.name.toLowerCase().includes(query));
+    }
+    return list;
+  }, [playlists, playlistSearchTerm]);
+
   const activeBrowsingPlaylist = useMemo(() => {
     if (selectedPlaylistId === null) return null;
     return playlists.find((p) => p.id === selectedPlaylistId) || null;
   }, [playlists, selectedPlaylistId]);
 
-  // --- Track Ended / Time Seek bindings ---
   useEffect(() => {
-    // Bind callbacks to audio player engine
     audioEngine.setCallbacks(
       (time, duration) => {
         setPlaybackState((prev) => ({
@@ -112,21 +144,17 @@ export default function App() {
         }));
       },
       () => {
-        // Track ended -> play next song automatically
         handleNext();
       }
     );
   }, [playbackState.queue, playbackState.repeatMode, currentTrackId]);
 
-  // Volume synchronization
   useEffect(() => {
     audioEngine.setVolume(playbackState.volume);
   }, [playbackState.volume]);
 
-  // --- Media System Actions ---
   const handlePlayPause = () => {
     if (!currentTrackId && visibleTracks.length > 0) {
-      // Pick first track
       handleSelectTrack(visibleTracks[0].id);
       return;
     }
@@ -144,7 +172,6 @@ export default function App() {
     const track = processedPool.find((t) => t.id === trackId);
     if (!track) return;
 
-    // Define current list of playing queue (by active browsing context)
     const activeQueue = customQueue || visibleTracks.map((t) => t.id);
 
     setCurrentTrackId(trackId);
@@ -157,15 +184,13 @@ export default function App() {
       progress: 0,
     }));
 
-    // Trigger playing inside player engine
     audioEngine.play(track);
   };
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     const { queue, repeatMode, isShuffle } = playbackState;
     if (queue.length === 0) return;
 
-    // Repeat one track override
     if (repeatMode === 'one' && currentTrackId) {
       const track = processedPool.find((t) => t.id === currentTrackId);
       if (track) {
@@ -183,9 +208,8 @@ export default function App() {
       if (currentIndex !== -1 && currentIndex < queue.length - 1) {
         nextIndex = currentIndex + 1;
       } else if (repeatMode === 'all') {
-        nextIndex = 0; // Wrap around to the start
+        nextIndex = 0;
       } else {
-        // Stop playing
         audioEngine.pause();
         setPlaybackState((prev) => ({ ...prev, isPlaying: false, currentTime: 0, progress: 0 }));
         return;
@@ -194,7 +218,7 @@ export default function App() {
 
     const nextTrackId = queue[nextIndex];
     handleSelectTrack(nextTrackId, queue);
-  };
+  }, [playbackState, currentTrackId, processedPool]);
 
   const handlePrevious = () => {
     const { queue, isShuffle } = playbackState;
@@ -209,7 +233,7 @@ export default function App() {
       if (currentIndex > 0) {
         prevIndex = currentIndex - 1;
       } else {
-        prevIndex = queue.length - 1; // Wrap around to end
+        prevIndex = queue.length - 1;
       }
     }
 
@@ -217,7 +241,6 @@ export default function App() {
     handleSelectTrack(prevTrackId, queue);
   };
 
-  // Trigger playing playlist directly (Header Banner Play actions)
   const handlePlayPlaylist = (playlistId: string | null, shuffle: boolean) => {
     let playTracks = processedPool;
     if (playlistId !== null) {
@@ -230,7 +253,6 @@ export default function App() {
     let startTrackId = trackIds[0];
 
     if (shuffle) {
-      // Shuffling track list
       const shuffled = [...trackIds].sort(() => Math.random() - 0.5);
       trackIds = shuffled;
       startTrackId = shuffled[0];
@@ -248,22 +270,48 @@ export default function App() {
     setPlaybackState((prev) => ({ ...prev, volume: vol }));
   };
 
+  const handleToggleShuffle = () => {
+    setPlaybackState(prev => ({ ...prev, isShuffle: !prev.isShuffle }));
+  };
+
+  const handleToggleRepeat = () => {
+    setPlaybackState(prev => {
+      let nextMode: 'off' | 'all' | 'one' = 'off';
+      if (prev.repeatMode === 'off') nextMode = 'all';
+      else if (prev.repeatMode === 'all') nextMode = 'one';
+      return { ...prev, repeatMode: nextMode };
+    });
+  };
+
   const handleSeek = (seconds: number) => {
     audioEngine.seek(seconds);
   };
 
-  // --- Dynamic Database Modifications ---
   const handleImportedTracks = (newTracks: Track[]) => {
-    // Add newly processed tracks recursively
     setTracks((prev) => {
-      // Evict duplicates if they exist
       const existingUrls = new Set(prev.map((t) => t.id));
       const filteredNew = newTracks.filter((t) => !existingUrls.has(t.id));
       return [...prev, ...filteredNew];
     });
   };
 
-  // Creates an empty virtual directory with no files so users can add tracks or simulate playlists
+  const handleClearLibrary = () => {
+    setTracks([]);
+    setCurrentTrackId(null);
+    audioEngine.pause();
+    setPlaybackState((prev) => ({ ...prev, isPlaying: false }));
+  };
+
+  const handleSelectFolder = async () => {
+    if (typeof window !== 'undefined' && window.electronAPI) {
+      const path = await window.electronAPI.selectFolder();
+      if (path) {
+        setLibraryPath(path);
+        await window.electronAPI.watchFolder(path);
+      }
+    }
+  };
+
   const handleCreateVirtualFolder = () => {
     if (!newFolderName.trim()) return;
 
@@ -271,7 +319,6 @@ export default function App() {
     const folderSlug = newFolderName.trim();
     const folderPlaylistId = folderSlug.toLowerCase();
 
-    // Create a default initial synthesizer track to represent the playlist directory immediately
     const firstTrack: Track = {
       id: `custom-synth-${Date.now()}`,
       title: dummySongName,
@@ -290,12 +337,9 @@ export default function App() {
     setTracks((prev) => [...prev, firstTrack]);
     setIsCreateFolderOpen(false);
     setNewFolderName('');
-    
-    // Jump to browsing the newly created folder right away
     setSelectedPlaylistId(folderPlaylistId);
   };
 
-  // Clear a playlist's tracks completely and remove it
   const handleRemovePlaylist = (playlistId: string) => {
     const idsToRemove = processedPool.filter((t) => t.playlistId === playlistId).map((t) => t.id);
     setTracks((prev) => prev.filter((t) => !idsToRemove.includes(t.id)));
@@ -304,32 +348,239 @@ export default function App() {
     }
   };
 
+  const handleSidebarContextMenu = (e: import('react').MouseEvent, playlistId: string) => {
+    e.preventDefault();
+    setContextMenu({
+      position: { x: e.clientX, y: e.clientY },
+      playlistId,
+    });
+  };
+
+  const getContextMenuItems = (): ContextMenuAction[] => {
+    if (!contextMenu) return [];
+    const pid = contextMenu.playlistId;
+    return [
+      {
+        id: 'play',
+        label: 'Play',
+        icon: <Play size={14} />,
+        onClick: () => handlePlayPlaylist(pid, false),
+      },
+      {
+        id: 'shuffle',
+        label: 'Shuffle',
+        icon: <Shuffle size={14} />,
+        onClick: () => handlePlayPlaylist(pid, true),
+      },
+      {
+        id: 'select',
+        label: 'Open',
+        icon: <FolderInput size={14} />,
+        onClick: () => {
+          setSelectedPlaylistId(pid);
+          setPlaylistSearchTerm('');
+        },
+      },
+      {
+        id: 'delete',
+        label: 'Delete Playlist',
+        icon: <Trash2 size={14} />,
+        danger: true,
+        onClick: () => handleRemovePlaylist(pid),
+      },
+    ];
+  };
+
+  // --- Keyboard Shortcuts ---
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+
+      if (e.key === ' ' && !isInput) {
+        e.preventDefault();
+        handlePlayPause();
+      }
+
+      if (e.key === 'ArrowRight' && !isInput) {
+        e.preventDefault();
+        if (activeTrack) handleSeek(Math.min(playbackState.currentTime + 5, activeTrack.duration));
+      }
+
+      if (e.key === 'ArrowLeft' && !isInput) {
+        e.preventDefault();
+        handleSeek(Math.max(playbackState.currentTime - 5, 0));
+      }
+
+      if (e.key === 'ArrowUp' && !isInput) {
+        e.preventDefault();
+        handleVolume(Math.min(playbackState.volume + 0.05, 1));
+      }
+
+      if (e.key === 'ArrowDown' && !isInput) {
+        e.preventDefault();
+        handleVolume(Math.max(playbackState.volume - 0.05, 0));
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+        e.preventDefault();
+        const searchInput = document.querySelector<HTMLInputElement>('input[placeholder="Search"]');
+        searchInput?.focus();
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.key === 'i') {
+        e.preventDefault();
+        setIsImportOpen(true);
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.key === '\\') {
+        e.preventDefault();
+        setSidebarExpanded((prev) => !prev);
+      }
+
+      if (e.key === 'Escape') {
+        setIsImportOpen(false);
+        setIsCreateFolderOpen(false);
+        setContextMenu(null);
+      }
+
+      if (e.key === 'n' && !isInput) handleNext();
+      if (e.key === 'p' && !isInput) handlePrevious();
+
+      if (e.key === 's' && !isInput) {
+        setPlaybackState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }));
+      }
+
+      if (e.key === 'r' && !isInput) {
+        setPlaybackState((prev) => {
+          let nextMode: 'off' | 'all' | 'one' = 'off';
+          if (prev.repeatMode === 'off') nextMode = 'all';
+          else if (prev.repeatMode === 'all') nextMode = 'one';
+          return { ...prev, repeatMode: nextMode };
+        });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handlePlayPause, handleNext, handlePrevious, handleSeek, handleVolume, playbackState, activeTrack]);
+
+  // --- Electron Media Keys ---
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.electronAPI) {
+      const cleanup = window.electronAPI.onMediaKey((action) => {
+        switch (action) {
+          case 'play-pause': handlePlayPause(); break;
+          case 'next': handleNext(); break;
+          case 'previous': handlePrevious(); break;
+        }
+      });
+      return cleanup;
+    }
+  }, [handlePlayPause, handleNext, handlePrevious]);
+
+  // --- Electron library folder watching ---
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.electronAPI) {
+      window.electronAPI.getLibraryPath().then((storedPath) => {
+        if (storedPath) setLibraryPath(storedPath);
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.electronAPI) {
+      const cleanup = window.electronAPI.onLibraryFilesUpdated(({ audioFiles, imageFiles, libraryPath: libPath }) => {
+        setLibraryPath(libPath);
+
+        const folderImagesMap: Record<string, { coverUrl?: string; firstImage?: string }> = {};
+
+        for (const img of imageFiles) {
+          const parts = img.relativePath.split('/');
+          let folderPath = 'root';
+          let folderName = '';
+          if (parts.length > 1) {
+            folderPath = parts.slice(0, parts.length - 1).join('/').toLowerCase();
+            folderName = parts[parts.length - 2].toLowerCase();
+          }
+
+          const fileName = img.name.toLowerCase();
+          const localUrl = `local-file://get?path=${encodeURIComponent(img.path)}`;
+
+          if (!folderImagesMap[folderPath]) folderImagesMap[folderPath] = {};
+          const currentDict = folderImagesMap[folderPath];
+          if (!currentDict.firstImage) currentDict.firstImage = localUrl;
+
+          const isCoverMatch =
+            fileName === `${folderName}.png` || fileName === `${folderName}.jpg` ||
+            fileName === `${folderName}.jpeg` || fileName === 'cover.jpg' ||
+            fileName === 'cover.png' || fileName === 'folder.jpg' || fileName === 'folder.png';
+
+          if (isCoverMatch) currentDict.coverUrl = localUrl;
+        }
+
+        const newTracks: Track[] = audioFiles.map((file) => {
+          const parts = file.relativePath.split('/');
+          let trackFolderPath = 'root';
+          if (parts.length > 1) trackFolderPath = parts.slice(0, parts.length - 1).join('/').toLowerCase();
+          const matchedCovers = folderImagesMap[trackFolderPath];
+          
+          // Encode the path to handle spaces/special chars — encodeURI preserves slashes
+          let coverUrl = file.metadata?.hasCover
+            ? `id3-cover://get?path=${encodeURIComponent(file.path)}`
+            : (matchedCovers?.coverUrl || matchedCovers?.firstImage);
+
+          return {
+            id: `local-${file.path}`,
+            title: file.metadata?.title || file.name.replace(/\.[^/.]+$/, ''),
+            artist: file.metadata?.artist || 'Unknown Artist',
+            album: file.metadata?.album || 'Unknown Album',
+            duration: file.metadata?.duration || 180,
+            url: `local-file://get?path=${encodeURIComponent(file.path)}`,
+            fileName: file.name,
+            filePath: file.relativePath,
+            playlistId: '',
+            size: file.size,
+            coverUrl,
+          };
+        });
+
+        setTracks((prev) => {
+          const existingPaths = new Set(prev.filter((t) => t.url.startsWith('local-file://')).map((t) => t.url));
+          const existingNonLocal = prev.filter((t) => !t.url.startsWith('local-file://'));
+          const freshLocal = newTracks.filter((t) => !existingPaths.has(t.url));
+          return [...existingNonLocal, ...freshLocal];
+        });
+      });
+
+      return cleanup;
+    }
+  }, []);
+
   return (
     <div
-      className="w-full h-screen bg-[#060608] text-white flex flex-col justify-between overflow-hidden relative selection:bg-red-500/30 antialiased"
+      className="w-full h-screen text-white flex overflow-hidden relative antialiased"
+      style={{ backgroundColor: '#0a0a0a' }}
       id="soundflow-layout-system"
     >
-      {/* Ambient background glows for glassmorphism */}
-      <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-red-500/10 rounded-full blur-[140px] pointer-events-none -translate-x-1/2 -translate-y-1/2" />
-      <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[120px] pointer-events-none translate-x-1/3 translate-y-1/3" />
-
-      {/* Main Container Area */}
-      <div className="flex-1 flex min-h-0 relative z-10">
+      <div className="flex-1 flex min-h-0">
         <Sidebar
-          playlists={playlists}
+          playlists={visiblePlaylists}
           selectedPlaylistId={selectedPlaylistId}
+          expanded={sidebarExpanded}
+          onToggle={() => setSidebarExpanded(!sidebarExpanded)}
           onSelectPlaylist={(id) => {
             setSelectedPlaylistId(id);
-            setSearchTerm(''); // clear local query
           }}
           onImportClick={() => setIsImportOpen(true)}
           onCreateFolderClick={() => setIsCreateFolderOpen(true)}
-          onRemovePlaylist={handleRemovePlaylist}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
+          searchTerm={playlistSearchTerm}
+          onSearchChange={setPlaylistSearchTerm}
+          libraryPath={libraryPath}
+          onContextMenu={handleSidebarContextMenu}
+          onOpenSettings={() => setIsSettingsOpen(true)}
         />
 
-        {/* Browser Area Container with relative positioning for floating controls */}
         <div className="flex-1 relative flex flex-col min-w-0 bg-transparent">
           <PlaylistView
             playlist={activeBrowsingPlaylist}
@@ -338,9 +589,12 @@ export default function App() {
             isPlaying={playbackState.isPlaying}
             onTrackSelect={(id) => handleSelectTrack(id)}
             onPlayPlaylist={handlePlayPlaylist}
+            songSearchTerm={songSearchTerm}
+            onSongSearchChange={setSongSearchTerm}
+            sidebarExpanded={sidebarExpanded}
+            onToggleSidebar={() => setSidebarExpanded(!sidebarExpanded)}
           />
 
-          {/* Music Bottom Controls player footer floating over PlaylistView strictly */}
           <div className="pointer-events-none absolute bottom-8 inset-x-0 flex justify-center z-50">
             <div className="pointer-events-auto w-full px-8 flex justify-center">
               <MusicPlayerControls
@@ -349,41 +603,58 @@ export default function App() {
                 onPlayPause={handlePlayPause}
                 onNext={handleNext}
                 onPrevious={handlePrevious}
-                onToggleShuffle={() => setPlaybackState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }))}
-                onToggleRepeat={() => {
-                  setPlaybackState((prev) => {
-                    let nextMode: 'off' | 'all' | 'one' = 'off';
-                    if (prev.repeatMode === 'off') nextMode = 'all';
-                    else if (prev.repeatMode === 'all') nextMode = 'one';
-                    return { ...prev, repeatMode: nextMode };
-                  });
-                }}
+                onToggleShuffle={handleToggleShuffle}
+                onToggleRepeat={handleToggleRepeat}
                 onVolumeChange={handleVolume}
                 onSeek={handleSeek}
-                playlistGradient={currentPlaylistGradient}
               />
             </div>
           </div>
         </div>
       </div>
 
-      {/* --- Overlay & Modals Section with Micro-animations --- */}
       <AnimatePresence>
-        {/* Onboarding Directory Importer drawer */}
+        {isSettingsOpen && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center">
+            <div className="bg-[#1c1c1e] border border-white/10 p-6 rounded-xl w-[400px] shadow-2xl">
+              <h2 className="text-lg font-medium mb-4">Settings</h2>
+              <div className="flex flex-col gap-2">
+                <label className="text-[13px] text-zinc-400">Library Path</label>
+                <div className="flex gap-2">
+                  <input type="text" readOnly value={libraryPath || 'Not set'} className="flex-1 bg-black/20 border border-white/10 rounded px-3 py-1.5 text-[13px] text-white" />
+                  <button onClick={handleSelectFolder} className="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded text-[13px] transition-colors cursor-pointer">Change</button>
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end">
+                <button onClick={() => setIsSettingsOpen(false)} className="bg-white text-black px-4 py-1.5 rounded-full text-[13px] font-medium hover:bg-zinc-200 transition-colors cursor-pointer">Close</button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {isImportOpen && (
           <DirectoryImporter
             onClose={() => setIsImportOpen(false)}
             onImportTracks={handleImportedTracks}
+            onClearLibrary={handleClearLibrary}
           />
         )}
 
-        {/* Minimalist modern Folder Creator Dialog */}
+        {contextMenu && (
+          <ContextMenu
+            items={getContextMenuItems()}
+            position={contextMenu.position}
+            onClose={() => setContextMenu(null)}
+          />
+        )}
+
         {isCreateFolderOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+            onContextMenu={(e) => e.preventDefault()}
           >
             <motion.div
               initial={{ scale: 0.95, y: 15 }}

@@ -297,11 +297,9 @@ export default function App() {
 
   // Clear a playlist's tracks completely
   const handleRemovePlaylist = (playlistId: string) => {
-    if (confirm(`Are you sure you want to clear folder playlist "${playlistId}" and remove its audio files?`)) {
-      setTracks((prev) => prev.filter((t) => t.playlistId !== playlistId));
-      if (selectedPlaylistId === playlistId) {
-        setSelectedPlaylistId(null);
-      }
+    setTracks((prev) => prev.filter((t) => t.playlistId !== playlistId));
+    if (selectedPlaylistId === playlistId) {
+      setSelectedPlaylistId(null);
     }
   };
 
@@ -330,37 +328,43 @@ export default function App() {
           onSearchChange={setSearchTerm}
         />
 
-        {/* Browser Area */}
-        <PlaylistView
-          playlist={activeBrowsingPlaylist}
-          tracks={visibleTracks}
-          currentTrackId={currentTrackId}
-          isPlaying={playbackState.isPlaying}
-          onTrackSelect={(id) => handleSelectTrack(id)}
-          onPlayPlaylist={handlePlayPlaylist}
-        />
-      </div>
+        {/* Browser Area Container with relative positioning for floating controls */}
+        <div className="flex-1 relative flex flex-col min-w-0 bg-transparent">
+          <PlaylistView
+            playlist={activeBrowsingPlaylist}
+            tracks={visibleTracks}
+            currentTrackId={currentTrackId}
+            isPlaying={playbackState.isPlaying}
+            onTrackSelect={(id) => handleSelectTrack(id)}
+            onPlayPlaylist={handlePlayPlaylist}
+          />
 
-      {/* Music Bottom Controls player footer */}
-      <MusicPlayerControls
-        currentTrack={activeTrack}
-        playbackState={playbackState}
-        onPlayPause={handlePlayPause}
-        onNext={handleNext}
-        onPrevious={handlePrevious}
-        onToggleShuffle={() => setPlaybackState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }))}
-        onToggleRepeat={() => {
-          setPlaybackState((prev) => {
-            let nextMode: 'off' | 'all' | 'one' = 'off';
-            if (prev.repeatMode === 'off') nextMode = 'all';
-            else if (prev.repeatMode === 'all') nextMode = 'one';
-            return { ...prev, repeatMode: nextMode };
-          });
-        }}
-        onVolumeChange={handleVolume}
-        onSeek={handleSeek}
-        playlistGradient={currentPlaylistGradient}
-      />
+          {/* Music Bottom Controls player footer floating over PlaylistView strictly */}
+          <div className="pointer-events-none absolute bottom-8 inset-x-0 flex justify-center z-50">
+            <div className="pointer-events-auto w-full px-8 flex justify-center">
+              <MusicPlayerControls
+                currentTrack={activeTrack}
+                playbackState={playbackState}
+                onPlayPause={handlePlayPause}
+                onNext={handleNext}
+                onPrevious={handlePrevious}
+                onToggleShuffle={() => setPlaybackState((prev) => ({ ...prev, isShuffle: !prev.isShuffle }))}
+                onToggleRepeat={() => {
+                  setPlaybackState((prev) => {
+                    let nextMode: 'off' | 'all' | 'one' = 'off';
+                    if (prev.repeatMode === 'off') nextMode = 'all';
+                    else if (prev.repeatMode === 'all') nextMode = 'one';
+                    return { ...prev, repeatMode: nextMode };
+                  });
+                }}
+                onVolumeChange={handleVolume}
+                onSeek={handleSeek}
+                playlistGradient={currentPlaylistGradient}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* --- Overlay & Modals Section with Micro-animations --- */}
       <AnimatePresence>

@@ -53,11 +53,11 @@ export default function PlaylistView({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col p-8 pt-10 relative bg-black/40 backdrop-blur-2xl" id="playlist-view">
+    <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col pb-[120px] relative bg-transparent" id="playlist-view">
 
       {/* Compact Header for Playlist */}
-      <div className="flex flex-row items-end gap-5 mb-8 select-none shrink-0 border-b border-[#2d2d2d] pb-6">
-        <div className="relative shrink-0 w-32 h-32 rounded-lg overflow-hidden bg-[#1c1c1e] border border-white/5 shadow-md flex items-center justify-center">
+      <div className="flex flex-row items-end gap-5 mb-6 select-none shrink-0 border-b border-white/5 pb-5 px-8 pt-10">
+        <div className="relative shrink-0 w-24 h-24 rounded-lg overflow-hidden bg-white/5 border border-white/10 shadow-lg flex items-center justify-center">
           {coverUrl ? (
             <img 
               src={coverUrl} 
@@ -66,24 +66,24 @@ export default function PlaylistView({
               referrerPolicy="no-referrer"
             />
           ) : (
-            <Folder size={48} className="text-zinc-700" />
+            <Folder size={32} className="text-zinc-600" />
           )}
         </div>
 
-        <div className="flex flex-col min-w-0 pb-1">
-          <span className="text-[13px] font-semibold text-zinc-400 tracking-wide uppercase mb-1">
+        <div className="flex flex-col min-w-0">
+          <span className="text-[11px] font-semibold text-zinc-400 tracking-wider uppercase mb-1">
             {isAllTracks ? 'Library' : 'Playlist'}
           </span>
-          <h1 className="font-sans font-bold text-3xl md:text-4xl text-white truncate leading-tight tracking-tight">
+          <h1 className="font-sans font-bold text-2xl md:text-3xl text-white truncate leading-tight tracking-tight mb-2">
             {title}
           </h1>
-          <div className="flex items-center gap-2 mt-2 text-[13px] text-zinc-400 font-sans">
+          <div className="flex items-center gap-2 text-[12px] text-zinc-400 font-sans mb-3">
             <span className="font-medium">{trackCountStr}</span>
             <span>•</span>
             <span>{totalDurationStr}</span>
           </div>
 
-          <div className="flex items-center gap-3 mt-4">
+          <div className="flex items-center gap-2.5">
             <button
               onClick={() => onPlayPlaylist(isAllTracks ? null : playlist.id, false)}
               disabled={tracks.length === 0}
@@ -105,7 +105,7 @@ export default function PlaylistView({
       </div>
 
       {/* Track List Section */}
-      <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex flex-col px-8">
         {/* Table Header */}
         <div className="flex items-center justify-between border-b border-[#2d2d2d] pb-2 px-2 select-none mb-2">
           <div className="flex items-center gap-4 text-[12px] font-medium text-zinc-500 w-full">
@@ -116,7 +116,7 @@ export default function PlaylistView({
         </div>
 
         {/* Tracks List */}
-        <div className="flex-1 overflow-y-auto no-scrollbar pb-20">
+        <div className="flex flex-col pb-6">
           {tracks.length === 0 ? (
             <div className="w-full h-32 flex items-center justify-center text-zinc-500 text-sm">
               This folder is empty.

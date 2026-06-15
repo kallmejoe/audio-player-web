@@ -53,10 +53,10 @@ export default function PlaylistView({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col relative bg-zinc-950/40" id="playlist-view">
+    <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col relative bg-transparent" id="playlist-view">
 
       {/* Compact Header for Playlist (Sticky) */}
-      <div className="flex flex-row items-end gap-5 select-none shrink-0 border-b border-white/5 pb-5 px-8 pt-10 sticky top-0 z-10 bg-zinc-950/80 backdrop-blur-3xl">
+      <div className="flex flex-row items-end gap-5 select-none shrink-0 border-b border-white/5 pb-5 px-8 pt-10 sticky top-0 z-10 bg-black/20 backdrop-blur-3xl">
         <div className="relative shrink-0 w-24 h-24 rounded-lg overflow-hidden bg-white/5 border border-white/10 shadow-lg flex items-center justify-center">
           {coverUrl ? (
             <img 

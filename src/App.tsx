@@ -297,7 +297,8 @@ export default function App() {
 
   // Clear a playlist's tracks completely and remove it
   const handleRemovePlaylist = (playlistId: string) => {
-    setTracks((prev) => prev.filter((t) => t.playlistId !== playlistId));
+    const idsToRemove = processedPool.filter((t) => t.playlistId === playlistId).map((t) => t.id);
+    setTracks((prev) => prev.filter((t) => !idsToRemove.includes(t.id)));
     if (selectedPlaylistId === playlistId) {
       setSelectedPlaylistId(null);
     }

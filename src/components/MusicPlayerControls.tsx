@@ -67,21 +67,27 @@ export default function MusicPlayerControls({
       </div>
 
       {/* Progress / Seek */}
-      <div className="flex items-center gap-2 w-[220px] px-2 shrink-0">
+      <div className="flex items-center gap-2 w-[220px] px-2 shrink-0 group">
         <span className="text-[10px] text-zinc-500 font-mono w-8 text-right">{formatTime(currentTime)}</span>
-        <div className="relative flex-1 flex items-center">
+        <div className="relative flex-1 flex items-center h-4">
           <input
             type="range"
             min={0}
             max={currentTrack.duration || 100}
             value={currentTime}
             onChange={(e) => onSeek(Number(e.target.value))}
-            className="w-full absolute z-10 opacity-0 cursor-pointer h-4"
+            className="w-full absolute z-20 opacity-0 cursor-pointer h-full m-0"
           />
-          <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+          <div className="w-full h-1 bg-white/10 rounded-full relative pointer-events-none">
+            {/* Filled track part */}
             <div 
-              className="h-full bg-white rounded-full pointer-events-none" 
+              className="absolute top-0 left-0 h-full bg-white rounded-full" 
               style={{ width: `${playbackState.progress}%` }} 
+            />
+            {/* Thumb indicator */}
+            <div 
+              className="absolute top-1/2 -translate-y-1/2 -ml-[5px] w-[10px] h-[10px] bg-white rounded-full shadow-sm"
+              style={{ left: `${playbackState.progress}%` }}
             />
           </div>
         </div>

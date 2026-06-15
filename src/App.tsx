@@ -42,7 +42,7 @@ export default function App() {
         console.error('Failed to load cached tracks:', e);
       }
     }
-    return INITIAL_SYNTHESIZED_TRACKS;
+    return [];
   });
 
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);

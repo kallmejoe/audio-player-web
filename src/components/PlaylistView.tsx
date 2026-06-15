@@ -102,7 +102,6 @@ export default function PlaylistView({
         </div>
         <div className="flex-[2] min-w-0 text-[11px] font-medium tracking-wide" style={{ color: '#71717a' }}>Title</div>
         <div className="flex-[1.2] min-w-0 text-[11px] font-medium tracking-wide hidden sm:block" style={{ color: '#71717a' }}>Artist</div>
-        <div className="flex-[1.2] min-w-0 text-[11px] font-medium tracking-wide hidden lg:block" style={{ color: '#71717a' }}>Album</div>
         <div className="w-12 shrink-0 flex justify-end">
           <Clock size={13} style={{ color: '#52525b' }} />
         </div>
@@ -168,11 +167,6 @@ export default function PlaylistView({
                 {/* Artist */}
                 <div className="flex-[1.2] min-w-0 pr-4 truncate hidden sm:block" style={{ fontSize: 13, color: '#a1a1aa' }}>
                   {track.artist}
-                </div>
-
-                {/* Album */}
-                <div className="flex-[1.2] min-w-0 pr-4 truncate hidden lg:block" style={{ fontSize: 13, color: '#71717a' }}>
-                  {track.album}
                 </div>
 
                 {/* Duration */}

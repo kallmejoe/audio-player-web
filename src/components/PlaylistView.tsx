@@ -53,20 +53,23 @@ export default function PlaylistView({
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-black/40 backdrop-blur-2xl relative overflow-hidden" id="playlist-view">
+    <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col relative bg-zinc-950/40" id="playlist-view">
 
-      {/* Compact Header for Playlist */}
-      <div className="flex flex-row items-end gap-5 mb-2 select-none shrink-0 border-b border-white/5 pb-5 px-8 pt-10">
+      {/* Compact Header for Playlist (Sticky) */}
+      <div className="flex flex-row items-end gap-5 select-none shrink-0 border-b border-white/5 pb-5 px-8 pt-10 sticky top-0 z-10 bg-zinc-950/80 backdrop-blur-3xl">
         <div className="relative shrink-0 w-24 h-24 rounded-lg overflow-hidden bg-white/5 border border-white/10 shadow-lg flex items-center justify-center">
           {coverUrl ? (
             <img 
               src={coverUrl} 
               alt={title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover relative z-10"
               referrerPolicy="no-referrer"
             />
           ) : (
-            <Folder size={32} className="text-zinc-600" />
+            <>
+              <div className={`absolute inset-0 bg-gradient-to-br ${coverGradient} opacity-20`} />
+              <Folder size={32} className="text-white backdrop-blur-md relative z-10 drop-shadow-md" />
+            </>
           )}
         </div>
 
@@ -105,7 +108,7 @@ export default function PlaylistView({
       </div>
 
       {/* Track List Section */}
-      <div className="flex-1 flex flex-col min-h-0 px-8 pb-32">
+      <div className="flex-1 flex flex-col min-h-0 px-8 pb-[140px] pt-4">
         {/* Table Header */}
         <div className="flex items-center justify-between border-b border-[#2d2d2d] pb-2 px-2 select-none mb-2 shrink-0">
           <div className="flex items-center gap-4 text-[12px] font-medium text-zinc-500 w-full">
@@ -116,7 +119,7 @@ export default function PlaylistView({
         </div>
 
         {/* Tracks List */}
-        <div className="flex-1 overflow-y-auto no-scrollbar pb-6">
+        <div className="flex flex-col pb-6">
           {tracks.length === 0 ? (
             <div className="w-full h-32 flex items-center justify-center text-zinc-500 text-sm">
               This folder is empty.

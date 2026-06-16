@@ -80,6 +80,13 @@ Molly leverages **Electron** for native desktop integration and a **React** + **
 3. **Metadata Extraction:** The `music-metadata` library reads ID3 tags directly from the files, displaying embedded cover art seamlessly via a custom `id3-cover://` protocol.
 4. **Optimized Build:** Frontend dependencies are strictly managed in `devDependencies` to ensure the final `.asar` package remains incredibly small and performant.
 
+
+## Collaboration
+- this project is purely vibecoded and i didn't read alot of the code 
+- i am not planning on adding more features becuz the app is perfect to me and i don't need clutter if you want feel free to fork
+- any issue will be opened for adding new feature will be closed i am sorry
+- issues and fixes will focus on bug fixes and performance
+
 ## 📝 License
 
 This project is licensed under the MIT License.

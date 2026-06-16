@@ -546,10 +546,8 @@ export default function App() {
         });
 
         setTracks((prev) => {
-          const existingPaths = new Set(prev.filter((t) => t.url.startsWith('local-file://')).map((t) => t.url));
-          const existingNonLocal = prev.filter((t) => !t.url.startsWith('local-file://'));
-          const freshLocal = newTracks.filter((t) => !existingPaths.has(t.url));
-          return [...existingNonLocal, ...freshLocal];
+          const nonLocalTracks = prev.filter((t) => !t.url.startsWith('local-file://'));
+          return [...nonLocalTracks, ...newTracks];
         });
       });
 

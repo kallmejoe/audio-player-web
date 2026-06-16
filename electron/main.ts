@@ -212,14 +212,14 @@ function startWatching(dirPath: string) {
     folderWatcher.close();
   }
 
-  const debounceTimer = 300;
+  const debounceTimer = 2000;
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
   folderWatcher = chokidar.watch(dirPath, {
     ignored: /(^|[/\\])\./,
     persistent: true,
     ignoreInitial: true,
-    awaitWriteFinish: { stabilityThreshold: 200, pollInterval: 100 },
+    awaitWriteFinish: { stabilityThreshold: 1000, pollInterval: 300 },
   });
 
   const sendUpdate = () => {

@@ -14,6 +14,7 @@
     "build": "npm run build:renderer && npm run build:electron",
     "build:mac": "npm run build && electron-builder --mac",
     "build:mac:arm": "npm run build && electron-builder --mac --arm64",
+    "build:win": "npm run build && electron-builder --win",
     "preview": "vite preview",
     "clean": "rm -rf dist dist-electron",
     "lint": "tsc --noEmit"
@@ -44,6 +45,10 @@
       "category": "public.app-category.music",
       "darkModeSupport": true,
       "hardenedRuntime": true
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.png"
     },
     "dmg": {
       "title": "Molly",

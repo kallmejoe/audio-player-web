@@ -313,8 +313,11 @@ app.whenReady().then(async () => {
   if (config.libraryPath && fs.existsSync(config.libraryPath)) {
     libraryPath = config.libraryPath;
     startWatching(config.libraryPath);
-    const { audioFiles, imageFiles } = await scanDirectory(config.libraryPath);
-    mainWindow?.webContents.send('library-files-updated', { audioFiles, imageFiles, libraryPath: config.libraryPath });
+    // Wait for the renderer to finish loading before sending files
+    mainWindow?.webContents.once('did-finish-load', async () => {
+      const { audioFiles, imageFiles } = await scanDirectory(config.libraryPath!);
+      mainWindow?.webContents.send('library-files-updated', { audioFiles, imageFiles, libraryPath: config.libraryPath });
+    });
   }
 
   app.on('activate', () => {

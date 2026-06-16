@@ -29,6 +29,28 @@ let mainWindow: BrowserWindow | null = null;
 let folderWatcher: chokidar.FSWatcher | null = null;
 let libraryPath: string | null = null;
 
+// --- Config persistence ---
+const CONFIG_FILE = path.join(app.getPath('userData'), 'molly-config.json');
+
+function loadConfig(): { libraryPath?: string } {
+  try {
+    if (fs.existsSync(CONFIG_FILE)) {
+      return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
+    }
+  } catch (e) {
+    console.error('Failed to load config:', e);
+  }
+  return {};
+}
+
+function saveConfig(config: { libraryPath?: string }) {
+  try {
+    fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
+  } catch (e) {
+    console.error('Failed to save config:', e);
+  }
+}
+
 function isAudioFile(filePath: string): boolean {
   const ext = path.extname(filePath).toLowerCase();
   return AUDIO_EXTENSIONS.has(ext);
@@ -241,7 +263,11 @@ function registerIpcHandlers() {
 
   ipcMain.handle('watch-folder', async (_event, dirPath: string) => {
     libraryPath = dirPath;
+    saveConfig({ libraryPath: dirPath });
     startWatching(dirPath);
+    // Immediately scan and send existing files to the renderer
+    const { audioFiles, imageFiles } = await scanDirectory(dirPath);
+    mainWindow?.webContents.send('library-files-updated', { audioFiles, imageFiles, libraryPath: dirPath });
     return true;
   });
 
@@ -252,6 +278,13 @@ function registerIpcHandlers() {
 
   ipcMain.handle('get-library-path', async () => {
     return libraryPath;
+  });
+
+  ipcMain.handle('clear-library-path', async () => {
+    libraryPath = null;
+    stopWatching();
+    saveConfig({ libraryPath: undefined });
+    return true;
   });
 }
 
@@ -269,11 +302,20 @@ function registerGlobalShortcuts() {
 
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   registerLocalFileProtocol();
   createWindow();
   registerIpcHandlers();
   registerGlobalShortcuts();
+
+  // Restore saved library path and auto-scan
+  const config = loadConfig();
+  if (config.libraryPath && fs.existsSync(config.libraryPath)) {
+    libraryPath = config.libraryPath;
+    startWatching(config.libraryPath);
+    const { audioFiles, imageFiles } = await scanDirectory(config.libraryPath);
+    mainWindow?.webContents.send('library-files-updated', { audioFiles, imageFiles, libraryPath: config.libraryPath });
+  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
